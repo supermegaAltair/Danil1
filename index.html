@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>С Днём Рождения, Данил!</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: black;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        .message {
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            opacity: 0;
+            transform: scale(0.5);
+            animation: fadeIn 2s forwards ease-out 1s;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .fireworks,
+        .balloons {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="fireworks"></canvas>
+    <canvas class="balloons"></canvas>
+    <div class="message">
+        <h1> С Днём Рождения, Данил! 🎂</h1>
+        <p>Пусть этот день будет полон радости, счастья и исполнения желаний!🤩</p>
+    </div>
+    <audio id="birthdayMusic" autoplay loop>
+        <source src="https://example.com/happy-birthday.mp3" type="audio/mpeg">
+        Ваш браузер не поддерживает аудиоэлемент.
+    </audio>
+    <script>
+        const fireworkCanvas = document.querySelector(".fireworks");
+        const balloonCanvas = document.querySelector(".balloons");
+        const fireCtx = fireworkCanvas.getContext("2d");
+        const balloonCtx = balloonCanvas.getContext("2d");
+        function resizeCanvas() {
+            fireworkCanvas.width = balloonCanvas.width = window.innerWidth;
+            fireworkCanvas.height = balloonCanvas.height = window.innerHeight;
+        }
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+        let particles = [];
+        let balloons = [];
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 5 + 2;
+                this.speedX = Math.random() * 4 - 2;
+                this.speedY = Math.random() * 4 - 2;
+                this.color = color;
+                this.alpha = 1;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.alpha -= 0.02;
+            }
+            draw() {
+                fireCtx.globalAlpha = this.alpha;
+                fireCtx.fillStyle = this.color;
+                fireCtx.beginPath();
+                fireCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                fireCtx.fill();
+            }
+        }
+        class Balloon {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.radius = Math.random() * 20 + 15;
+                this.speedY = Math.random() * 3 + 1.5;
+                this.color = color;
+                this.stringLength = this.radius * 2;
+                this.stringWave = Math.random() * 5 + 5;
+                this.stringOffset = Math.random() * Math.PI;
+            }
+            update() {
+                this.y -= this.speedY;
+                if (this.y < -this.radius) {
+                    this.y = window.innerHeight + this.radius;
+                    this.x = Math.random() * balloonCanvas.width;
+                }
+            }
+            draw() {
+                balloonCtx.fillStyle = this.color;
+                balloonCtx.beginPath();
+                balloonCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                balloonCtx.fill();
+                balloonCtx.fillStyle = "rgba(255, 255, 255, 0.5)";
+                balloonCtx.beginPath();
+                balloonCtx.arc(this.x - this.radius / 3, this.y - this.radius / 3, this.radius / 4, 0, Math.PI * 2);
+                balloonCtx.fill();
+                balloonCtx.strokeStyle = "white";
+                balloonCtx.lineWidth = 2;
+                balloonCtx.beginPath();
+                for (let i = 0; i < this.stringLength; i += 5) {
+                    let wave = Math.sin(i / this.stringWave + this.stringOffset) * 3;
+                    balloonCtx.lineTo(this.x + wave, this.y + this.radius + i);
+                }
+                balloonCtx.stroke();
+            }
+        }
+        function createFirework(x, y) {
+            const colors = ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff"];
+            for (let i = 0; i < 50; i++) {
+                particles.push(new Particle(x, y, colors[Math.floor(Math.random() * colors.length)]));
+            }
+        }
+        function createBalloons() {
+            const colors = ["red", "blue", "yellow", "green", "purple"];
+            for (let i = 0; i < 30; i++) {
+                balloons.push(new Balloon(Math.random() * balloonCanvas.width, window.innerHeight + 50, colors[Math.floor(Math.random() * colors.length)]));
+            }
+        }
+        function animate() {
+            fireCtx.clearRect(0, 0, fireworkCanvas.width, fireworkCanvas.height);
+            balloonCtx.clearRect(0, 0, balloonCanvas.width, balloonCanvas.height);
+            particles.forEach((particle, index) => {
+                particle.update();
+                particle.draw();
+                if (particle.alpha <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+            balloons.forEach((balloon, index) => {
+                balloon.update();
+                balloon.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+        balloonCanvas.addEventListener("click", (e) => {
+            balloons = balloons.filter(balloon => {
+                const dx = e.clientX - balloon.x;
+                const dy = e.clientY - balloon.y;
+                return Math.sqrt(dx * dx + dy * dy) > balloon.radius;
+            });
+            createFirework(e.clientX, e.clientY);
+        });
+        createBalloons();
+        animate();
+    </script>
+</body>
+
+</html>
